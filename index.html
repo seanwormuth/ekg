@@ -1,13 +1,60 @@
-<!DOCTYPE html>
-<html lang="en">
-	<head>
-		<meta charset="utf-8">
-		<title>My second three.js app</title>
-		<style>
-			body { margin: 0; }
-		</style>
-		<script type="module" crossorigin src="/assets/index-BDgHR9E4.js"></script>
-	</head>
-	<body>
-	</body>
-</html>
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize( window.innerWidth, window.innerHeight );
+document.body.appendChild( renderer.domElement );
+
+const camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 500 );
+camera.position.set( 0, 0, 40 );
+camera.lookAt( 0, 0, 0 );
+
+const scene = new THREE.Scene();
+const clock = new THREE.Clock();
+
+const light = new THREE.AmbientLight( 0x404040, 5 ); // soft white light
+scene.add( light );
+// White directional light at half intensity shining from the top.
+const directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
+scene.add( directionalLight );
+
+var texture = new THREE.TextureLoader().load("https://threejs.org/examples/textures/uv_grid_opengl.jpg")
+const material = new THREE.MeshBasicMaterial({
+  color: 0xeba6f5,
+  side: THREE.DoubleSide,
+  map: texture // texture as a map for material
+});
+
+const geometryp = new THREE.PlaneGeometry(15, 15); // width, height, no depth for plane
+const plane = new THREE.Mesh(geometryp, material);
+plane.position.set(0,0,-10)
+scene.add(plane);
+
+const loader = new GLTFLoader();
+
+loader.load( 'public/heart2.gltf', function ( gltf ) {
+	const model = gltf.scene;
+	const animations = gltf.animations; // Access the animation clips
+	const mixer = new THREE.AnimationMixer(model);
+    const action = mixer.clipAction(gltf.animations[0]);
+    action.play();
+	
+	scene.add(model);
+    animate();
+	 function animate() {
+		renderer.render(scene, camera);
+		requestAnimationFrame(animate);
+		//plane.rotation.y += 0.005;
+		//Rotating mesh in Y axis.     
+		//model.rotateY( Math.PI / 360 );
+  
+		const delta = clock.getDelta();
+		mixer.update( delta );
+
+};
+	
+}, undefined, function ( error ) {
+
+	console.error( error );
+
+} );
